@@ -25,7 +25,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--body); font
 @media print {
   body { background: #fff; color: #000; font-size: 11px; }
   :root { --bg: #fff; --bg2: #f8f8f8; --bg3: #efefef; --border: #ccc; --border-bright: #aaa; --amber: #b07000; --red: #900; --green: #060; --blue: #005; --purple: #504; --text: #111; --text-dim: #555; --text-bright: #000; }
-  nav, .no-print { display: none !important; }
+  .nav-wrapper, .no-print { display: none !important; }
   .block { break-inside: avoid; }
   main { display: block; }
   .block.full-width, .block { margin-bottom: 16px; }
@@ -36,7 +36,9 @@ body { background: var(--bg); color: var(--text); font-family: var(--body); font
 .header-left h1 { font-family: var(--cond); font-size: 32px; font-weight: 700; color: var(--text-bright); letter-spacing: 2px; text-transform: uppercase; line-height: 1; }
 .header-left .subtitle { font-family: var(--cond); font-size: 14px; color: var(--amber); letter-spacing: 3px; text-transform: uppercase; margin-top: 4px; }
 .header-right { font-family: var(--mono); font-size: 10px; color: var(--text-dim); text-align: right; line-height: 2; }
-nav { background: var(--bg3); border-bottom: 1px solid var(--border); padding: 0 40px; display: flex; gap: 0; overflow-x: auto; position: sticky; top: 0; z-index: 100; }
+/* nav wrapper pins Customize button while letting links scroll */
+.nav-wrapper { background: var(--bg3); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; display: flex; align-items: stretch; }
+nav { flex: 1; padding: 0 0 0 40px; display: flex; gap: 0; overflow-x: auto; min-width: 0; }
 nav a { font-family: var(--cond); font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); text-decoration: none; padding: 12px 18px; border-bottom: 2px solid transparent; white-space: nowrap; transition: all 0.15s; }
 nav a:hover { color: var(--amber); border-bottom-color: var(--amber); }
 main { max-width: 1400px; margin: 0 auto; padding: 32px 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
@@ -153,9 +155,9 @@ main { max-width: 1400px; margin: 0 auto; padding: 32px 40px; display: grid; gri
 /* NAV CUSTOMIZE BUTTON */
 .nav-customize {
   font-family: var(--cond); font-size: 12px; letter-spacing: 2px;
-  text-transform: uppercase; color: var(--amber); background: none;
-  border: none; border-bottom: 2px solid var(--amber); padding: 12px 18px;
-  cursor: pointer; white-space: nowrap; margin-left: auto;
+  text-transform: uppercase; color: var(--amber); background: var(--bg3);
+  border: none; border-left: 1px solid var(--border); border-bottom: 2px solid var(--amber);
+  padding: 12px 20px; cursor: pointer; white-space: nowrap; flex-shrink: 0;
 }
 .nav-customize:hover { color: var(--text-bright); }
 
@@ -229,10 +231,10 @@ main { max-width: 1400px; margin: 0 auto; padding: 32px 40px; display: grid; gri
   </div>
 </div>
 
-<nav class="no-print" id="main-nav">
-  <!-- dynamically populated -->
-  <button class="nav-customize no-print" onclick="openModal()">[ Customize ]</button>
-</nav>
+<div class="nav-wrapper no-print">
+  <nav id="main-nav"><!-- dynamically populated --></nav>
+  <button class="nav-customize" onclick="openModal()">[ Customize ]</button>
+</div>
 
 <main>
 
@@ -676,7 +678,6 @@ function priorityClass(p) {
 
 function renderNav(tracks) {
   var nav = document.getElementById('main-nav');
-  var btn = nav.querySelector('.nav-customize');
   nav.innerHTML = '';
 
   var staticLinks = [
@@ -712,7 +713,6 @@ function renderNav(tracks) {
     nav.appendChild(a);
   });
 
-  nav.appendChild(btn);
 }
 
 // ============================================================
