@@ -1,0 +1,1794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sub-News Intelligence Tracking Workflow v2</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700&family=Barlow:wght@300;400&display=swap');
+
+  :root {
+    --bg: #0a0c0f;
+    --bg2: #0f1318;
+    --bg3: #141920;
+    --border: #1e2830;
+    --border-bright: #2a3a48;
+    --amber: #e8a030;
+    --amber-dim: #8a5c18;
+    --red: #c0392b;
+    --red-dim: #6b1f16;
+    --green: #27ae60;
+    --green-dim: #145c32;
+    --blue: #2980b9;
+    --blue-dim: #164360;
+    --purple: #8e44ad;
+    --purple-dim: #4a235a;
+    --text: #c8d8e8;
+    --text-dim: #607080;
+    --text-bright: #e8f4f8;
+    --mono: 'Share Tech Mono', monospace;
+    --cond: 'Barlow Condensed', sans-serif;
+    --body: 'Barlow', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* PRINT */
+  @media print {
+    body { background: #fff; color: #000; font-size: 11px; }
+    :root {
+      --bg: #fff; --bg2: #f8f8f8; --bg3: #efefef;
+      --border: #ccc; --border-bright: #aaa;
+      --amber: #b07000; --red: #900; --green: #060;
+      --blue: #005; --purple: #504;
+      --text: #111; --text-dim: #555; --text-bright: #000;
+    }
+    nav, .no-print { display: none !important; }
+    .block { break-inside: avoid; }
+    main { display: block; }
+    .block.full-width, .block { margin-bottom: 16px; }
+    .dork-code { border-left: 3px solid #b07000; }
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--bg2);
+    border-bottom: 2px solid var(--amber);
+    padding: 24px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .header-left .classification {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--red);
+    letter-spacing: 3px;
+    margin-bottom: 6px;
+  }
+
+  .header-left h1 {
+    font-family: var(--cond);
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-bright);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+
+  .header-left .subtitle {
+    font-family: var(--cond);
+    font-size: 14px;
+    color: var(--amber);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .header-right {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    text-align: right;
+    line-height: 2;
+  }
+
+  /* NAV */
+  nav {
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  nav a {
+    font-family: var(--cond);
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    text-decoration: none;
+    padding: 12px 18px;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+
+  nav a:hover { color: var(--amber); border-bottom-color: var(--amber); }
+
+  /* MAIN */
+  main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 32px 40px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+
+  /* SECTION BLOCKS */
+  .block {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--border-bright);
+  }
+
+  .block.amber { border-top-color: var(--amber); }
+  .block.red   { border-top-color: var(--red); }
+  .block.green { border-top-color: var(--green); }
+  .block.blue  { border-top-color: var(--blue); }
+  .block.purple{ border-top-color: var(--purple); }
+
+  .block.full-width { grid-column: 1 / -1; }
+
+  .block-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg3);
+  }
+
+  .block-title {
+    font-family: var(--cond);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .block.amber  .block-title { color: var(--amber); }
+  .block.red    .block-title { color: var(--red); }
+  .block.green  .block-title { color: var(--green); }
+  .block.blue   .block-title { color: var(--blue); }
+  .block.purple .block-title { color: var(--purple); }
+
+  .block-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  .block-body { padding: 20px; }
+
+  /* WORKFLOW STEPS */
+  .workflow-steps { display: flex; flex-direction: column; gap: 12px; }
+
+  .step { display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: start; }
+
+  .step-num {
+    width: 36px; height: 36px;
+    background: var(--bg3);
+    border: 1px solid var(--amber-dim);
+    color: var(--amber);
+    font-family: var(--mono);
+    font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .step-content h4 {
+    font-family: var(--cond);
+    font-size: 14px; font-weight: 700;
+    color: var(--text-bright);
+    letter-spacing: 1px; text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .step-content p { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+
+  /* TRIAGE GATE */
+  .triage-gate {
+    margin-top: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+  }
+
+  .triage-gate-header {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--amber);
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+    text-transform: uppercase;
+  }
+
+  .triage-row {
+    display: grid;
+    grid-template-columns: 220px 80px 1fr;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    font-family: var(--mono);
+  }
+
+  .triage-row:last-child { border-bottom: none; }
+
+  .triage-row > div {
+    padding: 6px 10px;
+    border-right: 1px solid var(--border);
+  }
+
+  .triage-row > div:last-child { border-right: none; }
+
+  .triage-condition { color: var(--text-dim); }
+  .triage-verdict { text-align: center; font-weight: bold; }
+  .triage-verdict.log { color: var(--amber); }
+  .triage-verdict.escalate { color: var(--green); }
+  .triage-verdict.discard { color: var(--red); }
+  .triage-action { color: var(--text-dim); }
+
+  /* COLLECTION PLAN */
+  .collection-plan {
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    margin-top: 8px;
+  }
+
+  .cp-header {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--green);
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+    text-transform: uppercase;
+  }
+
+  .cp-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+  }
+
+  .cp-field {
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 10px;
+  }
+
+  .cp-field:nth-child(3n) { border-right: none; }
+  .cp-field:nth-last-child(-n+3) { border-bottom: none; }
+
+  .cp-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+
+  .cp-value {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--amber);
+    font-style: italic;
+  }
+
+  /* SOURCE TIER LEGEND */
+  .tier-legend {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .tier-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+
+  .tier-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .tier-dot.t1 { background: var(--green); }
+  .tier-dot.t2 { background: var(--blue); }
+  .tier-dot.t3 { background: var(--amber); }
+  .tier-dot.t4 { background: var(--red); }
+
+  /* TERM GRIDS */
+  .term-grid { display: flex; flex-direction: column; gap: 16px; }
+
+  .term-category h4 {
+    font-family: var(--cond);
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 3px; text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 8px; padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 3px 8px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.1s;
+    user-select: all;
+  }
+
+  .tag:hover { background: var(--border); }
+  .tag.telegram { border-color: #1a3a4a; color: #5dade2; }
+  .tag.handle { border-color: #1a3a5a; color: #5dade2; font-style: italic; }
+
+  /* SOURCE TABLE */
+  .source-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+
+  .source-table th {
+    font-family: var(--cond);
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text-dim); text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+  }
+
+  .source-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+
+  .source-table tr:last-child td { border-bottom: none; }
+
+  .source-table td:first-child {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--amber);
+    white-space: nowrap;
+  }
+
+  .source-table td:nth-child(2) { color: var(--text-bright); }
+  .source-table td:nth-child(3) { color: var(--text-dim); font-size: 11px; }
+  .source-table td:nth-child(4) { text-align: center; white-space: nowrap; }
+
+  .badge {
+    font-family: var(--mono);
+    font-size: 9px; padding: 2px 5px; letter-spacing: 1px;
+    display: inline-block;
+  }
+
+  .badge.free   { background: var(--green-dim); color: var(--green); }
+  .badge.paid   { background: var(--red-dim); color: #e74c3c; }
+  .badge.mixed  { background: var(--blue-dim); color: var(--blue); }
+
+  .badge.t1 { background: #0a2a10; color: var(--green); border: 1px solid var(--green-dim); }
+  .badge.t2 { background: #0a1a2a; color: var(--blue); border: 1px solid var(--blue-dim); }
+  .badge.t3 { background: #2a1a00; color: var(--amber); border: 1px solid var(--amber-dim); }
+  .badge.t4 { background: var(--red-dim); color: #e74c3c; border: 1px solid var(--red-dim); }
+
+  .badge.bias-adv { background: #2a0a0a; color: #e74c3c; font-size: 8px; }
+  .badge.bias-ua  { background: #0a1a2a; color: #5dade2; font-size: 8px; }
+  .badge.bias-us  { background: #0a1a2a; color: #85c1e9; font-size: 8px; }
+  .badge.bias-n   { background: #0a1a0a; color: var(--green); font-size: 8px; }
+
+  /* DORK BLOCKS */
+  .dork-block { margin-bottom: 14px; }
+
+  .dork-label {
+    font-family: var(--cond);
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+
+  .dork-note {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+    letter-spacing: 1px;
+  }
+
+  .dork-code {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--amber);
+    padding: 8px 12px;
+    color: var(--amber);
+    word-break: break-all;
+    line-height: 1.8;
+    cursor: pointer;
+    user-select: all;
+    position: relative;
+  }
+
+  .dork-code:hover::after {
+    content: 'CLICK TO SELECT';
+    position: absolute;
+    top: 4px; right: 8px;
+    font-size: 8px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+  }
+
+  .dork-code .op   { color: var(--red); }
+  .dork-code .term { color: var(--text-bright); }
+  .dork-code .sop  { color: #5dade2; }
+  .dork-code .var  { color: var(--purple); font-style: italic; }
+
+  /* CADENCE */
+  .cadence-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+  .cadence-cell { background: var(--bg3); border: 1px solid var(--border); padding: 14px; }
+
+  .cadence-cell h4 {
+    font-family: var(--cond);
+    font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+    margin-bottom: 10px; padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .cadence-cell.daily   h4 { color: var(--red); }
+  .cadence-cell.weekly  h4 { color: var(--amber); }
+  .cadence-cell.monthly h4 { color: var(--green); }
+  .cadence-cell.trigger h4 { color: var(--purple); }
+
+  .cadence-cell ul { list-style: none; font-size: 12px; color: var(--text-dim); }
+  .cadence-cell ul li { padding: 3px 0; padding-left: 12px; position: relative; }
+  .cadence-cell ul li::before { content: '—'; position: absolute; left: 0; color: var(--border-bright); }
+
+  .cadence-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+
+  /* FOOTER NOTE */
+  .footer-note {
+    grid-column: 1 / -1;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--red);
+    background: var(--bg2);
+    padding: 14px 20px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    line-height: 1.8;
+  }
+
+  .section-divider {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 4px 0;
+  }
+
+  .section-divider span {
+    font-family: var(--cond);
+    font-size: 10px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+
+  .section-divider::before, .section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border-bright); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="classification">// ANALYST REFERENCE DOCUMENT // REV 2 //</div>
+    <h1>Sub-News Intelligence<br>Tracking Workflow</h1>
+    <div class="subtitle">Cartel · APT · Conflict · eCrime · Geopolitical Sub-Surface</div>
+  </div>
+  <div class="header-right">
+    PURPOSE: OSINT / CTI COLLECTION<br>
+    SCOPE: NON-NEWSWORTHY EVENTS<br>
+    AUDIENCE: CTI ANALYST (L1–L3)<br>
+    VERSION: 2.0 // IMPROVED
+  </div>
+</div>
+
+<nav class="no-print">
+  <a href="#workflow">Workflow</a>
+  <a href="#collection-plan">Collection Plan</a>
+  <a href="#triage">Triage Gate</a>
+  <a href="#source-tiers">Source Tiers</a>
+  <a href="#cartel">Cartel</a>
+  <a href="#apt">APT</a>
+  <a href="#conflict">Conflict</a>
+  <a href="#sources">Sources</a>
+  <a href="#dorks">Dorks</a>
+  <a href="#cadence">Cadence</a>
+  <a href="#follows">Follows</a>
+  <a href="#telegram">Telegram</a>
+</nav>
+
+<main>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  SECTION 1: WORKFLOW                                    -->
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<div class="section-divider"><span>01 // Workflow</span></div>
+
+<div class="block amber full-width" id="workflow">
+  <div class="block-header">
+    <span class="block-title">Collection Workflow</span>
+    <span class="block-tag">Define → Collect → Triage → Document → Synthesize → Review</span>
+  </div>
+  <div class="block-body">
+    <div class="workflow-steps">
+
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-content">
+          <h4>Define Monitored Tracks</h4>
+          <p>Assign each intelligence track a standing requirement using the Collection Plan template (see below). Each track gets: named actor/geo, key identifiers, priority tier (P1/P2/P3), source list, and owner. Do not start collecting without a defined track — undirected collection produces noise. Maximum 5 active P1 tracks per analyst before quality degrades.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-content">
+          <h4>Build Persistent Collection Infrastructure</h4>
+          <p>RSS aggregator (Feedly/Inoreader) with keyword alerts per track. Telegram channel watchlist per track. Google Alerts for low-frequency proper-noun terms. Ransomwatch.org bookmark for eCrime track. Do not rely on ad-hoc manual search as primary collection — every P1 track needs at least one standing automated pull. Infrastructure setup is a one-time cost; maintain and audit monthly.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-content">
+          <h4>Daily Collection Run</h4>
+          <p>Realistic time budget: 30–45 min for 2–3 active tracks; 60 min for 5 tracks. Sweep aggregator priority inbox. Check Telegram watchlist. Flag items — do not read-to-understand at this stage. Apply consistent tags: [actor], [geo], [TTP], [IOC], [RUMINT], [confirmed]. Volume will be high on active conflict tracks; ruthless triage is the skill here, not completeness.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">04</div>
+        <div class="step-content">
+          <h4>Triage and Corroborate</h4>
+          <p>Apply the Source Tier system and Triage Decision Gate (see below). Single-source Tier 4 = log as RUMINT, do not escalate. Two independent Tier 2+ sources = escalate to actor notebook. Distinguish observation from inference explicitly. The load-bearing analytical question: <em>"What would have to be true for this to be false?"</em></p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">05</div>
+        <div class="step-content">
+          <h4>Document to Persistent Record</h4>
+          <p>Push confirmed and notable RUMINT items to actor notebook. Every entry requires: date, source URL/channel, raw claim, corroboration status, confidence (H/M/L), analyst note. Log RUMINT even when unconfirmed — it establishes pattern-of-life. Silence from a previously active track is also an entry: log date, observation "no activity reported," and flag for review.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">06</div>
+        <div class="step-content">
+          <h4>Weekly Delta Brief</h4>
+          <p>Review accumulated entries per track. Identify: new TTPs, geographic shifts, personnel changes, capability changes, unusual quiet. Write 3–5 sentence delta brief per P1 track. Format: [what changed] / [from what baseline] / [analytical significance] / [confidence]. Do not summarize raw events — synthesize change.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">07</div>
+        <div class="step-content">
+          <h4>Triggered After-Action Review</h4>
+          <p>When a major event breaks (cartel leader arrested, APT campaign publicly disclosed, ceasefire announced), immediately pull all open RUMINT items for that track and run a confirmation/disconfirmation pass. Update confidence ratings. Note which prior RUMINT was validated and which was disinformation — this calibrates source fidelity. Log the trigger event as a reference anchor in the actor notebook.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- COLLECTION PLAN TEMPLATE -->
+<div class="block green full-width" id="collection-plan">
+  <div class="block-header">
+    <span class="block-title">Collection Plan Template</span>
+    <span class="block-tag">One per Track // Review Monthly</span>
+  </div>
+  <div class="block-body">
+    <div class="collection-plan">
+      <div class="cp-header">// TRACK RECORD — FIELDS TO COMPLETE PER ACTIVE TRACK //</div>
+      <div class="cp-grid">
+        <div class="cp-field"><div class="cp-label">Track Name</div><div class="cp-value">[actor or geo label]</div></div>
+        <div class="cp-field"><div class="cp-label">Priority Tier</div><div class="cp-value">P1 / P2 / P3</div></div>
+        <div class="cp-field"><div class="cp-label">Owner / Analyst</div><div class="cp-value">[name or initials]</div></div>
+        <div class="cp-field"><div class="cp-label">Actor / Entity</div><div class="cp-value">[group name, aliases]</div></div>
+        <div class="cp-field"><div class="cp-label">Geographic Scope</div><div class="cp-value">[country / region / city]</div></div>
+        <div class="cp-field"><div class="cp-label">Standing Requirement</div><div class="cp-value">[what question does this track answer?]</div></div>
+        <div class="cp-field"><div class="cp-label">Key Identifiers</div><div class="cp-value">[MITRE group ID, alias list, malware family]</div></div>
+        <div class="cp-field"><div class="cp-label">Primary Sources</div><div class="cp-value">[Tier 1–2 sources assigned to this track]</div></div>
+        <div class="cp-field"><div class="cp-label">Secondary / RUMINT Sources</div><div class="cp-value">[Tier 3–4 monitored for this track]</div></div>
+        <div class="cp-field"><div class="cp-label">Standing Search Terms</div><div class="cp-value">[3–8 keywords / dork template reference]</div></div>
+        <div class="cp-field"><div class="cp-label">Telegram Channels</div><div class="cp-value">[@handle list]</div></div>
+        <div class="cp-field"><div class="cp-label">Last Reviewed</div><div class="cp-value">[YYYY-MM-DD]</div></div>
+        <div class="cp-field"><div class="cp-label">Track Status</div><div class="cp-value">ACTIVE / WATCH / DORMANT / CLOSED</div></div>
+        <div class="cp-field"><div class="cp-label">Known Gaps</div><div class="cp-value">[what are you not seeing? what would change priority?]</div></div>
+        <div class="cp-field"><div class="cp-label">Notebook Link</div><div class="cp-value">[URL to actor notebook record]</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TRIAGE GATE -->
+<div class="block red full-width" id="triage">
+  <div class="block-header">
+    <span class="block-title">Triage Decision Gate</span>
+    <span class="block-tag">Apply to Every Flagged Item Before Logging</span>
+  </div>
+  <div class="block-body">
+    <div class="triage-gate">
+      <div class="triage-gate-header">// CONDITION → VERDICT → ACTION //</div>
+      <div class="triage-row">
+        <div class="triage-condition">Single source, Tier 4 (adversarial/unverified)</div>
+        <div class="triage-verdict log">LOG RUMINT</div>
+        <div class="triage-action">Log with confidence LOW. Tag [RUMINT][T4]. Do not escalate. Do not cite in finished product.</div>
+      </div>
+      <div class="triage-row">
+        <div class="triage-condition">Single source, Tier 3 (community OSINT)</div>
+        <div class="triage-verdict log">LOG RUMINT</div>
+        <div class="triage-action">Log with confidence LOW-MED. Tag [RUMINT][T3]. Flag for corroboration within 48hr.</div>
+      </div>
+      <div class="triage-row">
+        <div class="triage-condition">Two independent Tier 3 sources, consistent claim</div>
+        <div class="triage-verdict log">LOG + FLAG</div>
+        <div class="triage-action">Upgrade to confidence MED. Note both sources. Seek Tier 1–2 confirmation before escalating.</div>
+      </div>
+      <div class="triage-row">
+        <div class="triage-condition">One Tier 2 source + one Tier 3 corroboration</div>
+        <div class="triage-verdict escalate">ESCALATE</div>
+        <div class="triage-action">Log to actor notebook with confidence MED-HIGH. Cite both sources. Flag for delta brief inclusion.</div>
+      </div>
+      <div class="triage-row">
+        <div class="triage-condition">Two or more independent Tier 2 sources</div>
+        <div class="triage-verdict escalate">ESCALATE</div>
+        <div class="triage-action">Log with confidence HIGH. Include in delta brief. Push to finished product if relevant.</div>
+      </div>
+      <div class="triage-row">
+        <div class="triage-condition">Tier 1 primary source (official advisory, direct statement)</div>
+        <div class="triage-verdict escalate">ESCALATE</div>
+        <div class="triage-action">Log with confidence HIGH. Direct cite permitted. Confirm publication date and attribution chain.</div>
+      </div>
+      <div class="triage-row">
+        <div class="triage-condition">Claim contradicted by equal or higher-tier source</div>
+        <div class="triage-verdict discard">CONFLICT</div>
+        <div class="triage-action">Log conflict as analytical entry. Note both claims, both sources, and confidence gap. Do not resolve without additional evidence.</div>
+      </div>
+      <div class="triage-row">
+        <div class="triage-condition">Prior RUMINT confirmed by later Tier 1–2 reporting</div>
+        <div class="triage-verdict escalate">RETROGRADE</div>
+        <div class="triage-action">Update original RUMINT entry: add confirmation source, upgrade confidence, note lag time. Improves source fidelity calibration.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SOURCE TIER SYSTEM -->
+<div class="block blue full-width" id="source-tiers">
+  <div class="block-header">
+    <span class="block-title">Source Tier System</span>
+    <span class="block-tag">Apply to Every Source // Bias Indicators Required</span>
+  </div>
+  <div class="block-body">
+    <div class="tier-legend">
+      <div class="tier-item"><div class="tier-dot t1"></div> T1 — Primary / Official</div>
+      <div class="tier-item"><div class="tier-dot t2"></div> T2 — Established Secondary (research-grade)</div>
+      <div class="tier-item"><div class="tier-dot t3"></div> T3 — Community / OSINT (quality-variable)</div>
+      <div class="tier-item"><div class="tier-dot t4"></div> T4 — Adversarial / Unverified (treat as RUMINT by default)</div>
+    </div>
+    <table class="source-table">
+      <thead>
+        <tr>
+          <th>Source</th>
+          <th>Track</th>
+          <th>Notes</th>
+          <th>Tier / Bias</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>CISA Advisories</td>
+          <td>APT / eCrime</td>
+          <td>cisa.gov — RSS available. Official US govt attribution. Slow but authoritative.</td>
+          <td><span class="badge t1">T1</span> <span class="badge bias-us">US-GOV</span></td>
+        </tr>
+        <tr>
+          <td>CERT-UA</td>
+          <td>APT / Conflict</td>
+          <td>cert.gov.ua — Primary source for Ukraine cyber incidents. Telegram active.</td>
+          <td><span class="badge t1">T1</span> <span class="badge bias-ua">UA-GOV</span></td>
+        </tr>
+        <tr>
+          <td>UK MoD Daily Intel</td>
+          <td>Conflict</td>
+          <td>@DefenceHQ on X / gov.uk — daily assessed release, conservative estimates.</td>
+          <td><span class="badge t1">T1</span> <span class="badge bias-us">UK-GOV</span></td>
+        </tr>
+        <tr>
+          <td>OFAC Sanctions Designations</td>
+          <td>Cartel / APT / eCrime</td>
+          <td>home.treasury.gov/policy-issues/financial-sanctions — authoritative actor-to-alias mapping.</td>
+          <td><span class="badge t1">T1</span> <span class="badge bias-us">US-GOV</span></td>
+        </tr>
+        <tr>
+          <td>Mandiant / Google Threat Intel</td>
+          <td>APT</td>
+          <td>Free blog + paid portal. Blog RSS essential. High-quality primary research.</td>
+          <td><span class="badge t2">T2</span> <span class="badge badge bias-n">NEUTRAL</span></td>
+        </tr>
+        <tr>
+          <td>Microsoft MSTIC Blog</td>
+          <td>APT</td>
+          <td>microsoft.com/security/blog — zero-day and state actor campaigns. High reliability.</td>
+          <td><span class="badge t2">T2</span> <span class="badge bias-n">NEUTRAL</span></td>
+        </tr>
+        <tr>
+          <td>Volexity</td>
+          <td>APT</td>
+          <td>Espionage, email-delivered malware, IR/CN/RU focus. Primary research quality.</td>
+          <td><span class="badge t2">T2</span> <span class="badge bias-n">NEUTRAL</span></td>
+        </tr>
+        <tr>
+          <td>SentinelLabs</td>
+          <td>APT</td>
+          <td>sentinelone.com/labs — malware analysis, nation-state campaigns.</td>
+          <td><span class="badge t2">T2</span> <span class="badge bias-n">NEUTRAL</span></td>
+        </tr>
+        <tr>
+          <td>Secureworks CTU</td>
+          <td>APT</td>
+          <td>GOLD/BRONZE named actor profiles. Good for structured TTP tracking.</td>
+          <td><span class="badge t2">T2</span> <span class="badge bias-n">NEUTRAL</span></td>
+        </tr>
+        <tr>
+          <td>Recorded Future (Insikt blog)</td>
+          <td>APT / eCrime / Geopolitical</td>
+          <td>Free blog only. Paid platform for depth. Good breadth across tracks.</td>
+          <td><span class="badge t2">T2</span> <span class="badge bias-n">NEUTRAL</span></td>
+        </tr>
+        <tr>
+          <td>ISW Daily</td>
+          <td>Conflict</td>
+          <td>understandingwar.org — Ukraine/Russia, Middle East. Daily release with maps.</td>
+          <td><span class="badge t2">T2</span> <span class="badge bias-ua">PRO-UA</span></td>
+        </tr>
+        <tr>
+          <td>Critical Threats / AEI</td>
+          <td>Conflict (ME/Iran)</td>
+          <td>criticalthreats.org — Iran campaign tracking, IRGC/Houthi proxy networks.</td>
+          <td><span class="badge t2">T2</span> <span class="badge bias-us">US-ALIGNED</span></td>
+        </tr>
+        <tr>
+          <td>InSight Crime</td>
+          <td>Cartel / OCG</td>
+          <td>insightcrime.org — MX/LATAM organized crime. Deep reporting, newsletter + RSS.</td>
+          <td><span class="badge t2">T2</span> <span class="badge bias-n">NEUTRAL</span></td>
+        </tr>
+        <tr>
+          <td>Long War Journal</td>
+          <td>Conflict (ME/AF/Sahel)</td>
+          <td>longwarjournal.org — jihadist tracking, Sahel, AQ/IS affiliates. Conservative.</td>
+          <td><span class="badge t2">T2</span> <span class="badge bias-us">US-ALIGNED</span></td>
+        </tr>
+        <tr>
+          <td>Meduza</td>
+          <td>Conflict (RU internal)</td>
+          <td>meduza.io — independent Russian journalism. Critical for sub-surface RU political/military not carried by milblogs.</td>
+          <td><span class="badge t2">T2</span> <span class="badge bias-n">NEUTRAL</span></td>
+        </tr>
+        <tr>
+          <td>ACLED</td>
+          <td>Conflict / Cartel</td>
+          <td>acleddata.com — structured event data globally. API + export. Highest-fidelity for trend analysis.</td>
+          <td><span class="badge t2">T2</span> <span class="badge bias-n">NEUTRAL</span></td>
+        </tr>
+        <tr>
+          <td>Ransomwatch.org</td>
+          <td>eCrime</td>
+          <td>FREE aggregator of all active ransomware leak sites. Essential — no account required.</td>
+          <td><span class="badge t2">T2</span> <span class="badge bias-n">NEUTRAL</span></td>
+        </tr>
+        <tr>
+          <td>Borderland Beat</td>
+          <td>Cartel</td>
+          <td>borderlandbeat.com — community-translated MX cartel, plaza-level. Quality varies per contributor.</td>
+          <td><span class="badge t3">T3</span> <span class="badge bias-n">NEUTRAL</span></td>
+        </tr>
+        <tr>
+          <td>WarTranslated (@wartranslated)</td>
+          <td>Conflict (UA/RU)</td>
+          <td>X/Twitter — Ukrainian and Russian milblogger source translations. Valuable synthesis layer.</td>
+          <td><span class="badge t3">T3</span> <span class="badge bias-ua">PRO-UA</span></td>
+        </tr>
+        <tr>
+          <td>OSINT Ukraine accounts</td>
+          <td>Conflict (UA/RU)</td>
+          <td>@UAControlMap, @DefMon3, @neonhandrail — geolocated imagery and frontline mapping.</td>
+          <td><span class="badge t3">T3</span> <span class="badge bias-ua">PRO-UA</span></td>
+        </tr>
+        <tr>
+          <td>vx-underground</td>
+          <td>eCrime / APT</td>
+          <td>Malware samples, actor communiqués. Descriptive, not analytical. Useful for malware family confirmation.</td>
+          <td><span class="badge t3">T3</span> <span class="badge bias-n">NEUTRAL</span></td>
+        </tr>
+        <tr>
+          <td>El Blog del Narco</td>
+          <td>Cartel</td>
+          <td>Raw cartel incident reporting, imagery, mantas. Telegram mirror active. Graphic content frequent.</td>
+          <td><span class="badge t4">T4</span> <span class="badge bias-adv">UNVERIFIED</span></td>
+        </tr>
+        <tr>
+          <td>Rybar (Telegram)</td>
+          <td>Conflict (RU/UA)</td>
+          <td>Pro-Russian milblog. High volume, operational detail, known to amplify disinformation. Cross-check every claim.</td>
+          <td><span class="badge t4">T4</span> <span class="badge bias-adv">PRO-RU</span></td>
+        </tr>
+        <tr>
+          <td>Houthi / PMF Telegram channels</td>
+          <td>Conflict (ME)</td>
+          <td>Adversary-controlled. Useful for claimed operations but assume amplification and disinfo.</td>
+          <td><span class="badge t4">T4</span> <span class="badge bias-adv">ADV-CTRL</span></td>
+        </tr>
+        <tr>
+          <td>Narco Telegram channels</td>
+          <td>Cartel</td>
+          <td>Actor-adjacent or actor-controlled. Treat all claims as RUMINT. Graphic material standard.</td>
+          <td><span class="badge t4">T4</span> <span class="badge bias-adv">UNVERIFIED</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  SECTION 2: TERM LISTS                                  -->
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<div class="section-divider"><span>02 // Term Lists</span></div>
+
+<!-- CARTEL TERMS -->
+<div class="block red" id="cartel">
+  <div class="block-header">
+    <span class="block-title">Cartel / OCG Terms</span>
+    <span class="block-tag">MX // Central America // eCrime</span>
+  </div>
+  <div class="block-body">
+    <div class="term-grid">
+
+      <div class="term-category">
+        <h4>Major MX Cartel Identifiers</h4>
+        <div class="tags">
+          <span class="tag">Sinaloa Cartel</span>
+          <span class="tag">CJNG</span>
+          <span class="tag">Jalisco Nueva Generación</span>
+          <span class="tag">Los Chapitos</span>
+          <span class="tag">Mayo faction</span>
+          <span class="tag">Cartel del Noreste</span>
+          <span class="tag">CDN</span>
+          <span class="tag">Gulf Cartel</span>
+          <span class="tag">CDG</span>
+          <span class="tag">Cartel de Juárez</span>
+          <span class="tag">La Línea</span>
+          <span class="tag">Los Zetas remnants</span>
+          <span class="tag">CSRL</span>
+          <span class="tag">Cartel Santa Rosa de Lima</span>
+          <span class="tag">Los Viagras</span>
+          <span class="tag">La Familia Michoacana</span>
+          <span class="tag">Nueva Familia Michoacana</span>
+        </div>
+      </div>
+
+      <div class="term-category">
+        <h4>Central America / US-Presence Gangs</h4>
+        <div class="tags">
+          <span class="tag">MS-13</span>
+          <span class="tag">Mara Salvatrucha</span>
+          <span class="tag">Barrio 18</span>
+          <span class="tag">Tren de Aragua</span>
+          <span class="tag">Venezuelan gang US</span>
+          <span class="tag">TdA prison takeover</span>
+          <span class="tag">transnational gang expansion</span>
+        </div>
+      </div>
+
+      <div class="term-category">
+        <h4>Geographic Hotspots</h4>
+        <div class="tags">
+          <span class="tag">Culiacán</span>
+          <span class="tag">Sonora corridor</span>
+          <span class="tag">Tamaulipas</span>
+          <span class="tag">Zacatecas</span>
+          <span class="tag">Guanajuato</span>
+          <span class="tag">Michoacán</span>
+          <span class="tag">Guerrero</span>
+          <span class="tag">Tijuana</span>
+          <span class="tag">Nuevo Laredo</span>
+          <span class="tag">Juárez Valley</span>
+          <span class="tag">Tierra Caliente</span>
+          <span class="tag">Reynosa</span>
+          <span class="tag">Matamoros</span>
+        </div>
+      </div>
+
+      <div class="term-category">
+        <h4>Tactical / Operational Terms</h4>
+        <div class="tags">
+          <span class="tag">plaza control</span>
+          <span class="tag">halcones</span>
+          <span class="tag">sicarios</span>
+          <span class="tag">narcoblock</span>
+          <span class="tag">levantón</span>
+          <span class="tag">cobro de piso</span>
+          <span class="tag">encobijado</span>
+          <span class="tag">narcomanta</span>
+          <span class="tag">drone attack cartel</span>
+          <span class="tag">IED México</span>
+          <span class="tag">armed convoy</span>
+          <span class="tag">checkpoint cartel</span>
+          <span class="tag">narco-blockade</span>
+          <span class="tag">enfrentamiento</span>
+          <span class="tag">emboscada</span>
+        </div>
+      </div>
+
+      <div class="term-category">
+        <h4>Supply Chain / Financial Tracking</h4>
+        <div class="tags">
+          <span class="tag">fentanyl precursor</span>
+          <span class="tag">Wuhan chemical supplier</span>
+          <span class="tag">Mexican precursor lab</span>
+          <span class="tag">pill press seizure</span>
+          <span class="tag">narco-corrido</span>
+          <span class="tag">corrido tumbado</span>
+          <span class="tag">OFAC cartel designation</span>
+          <span class="tag">money laundering MX</span>
+          <span class="tag">hawala cartel</span>
+        </div>
+      </div>
+
+      <div class="term-category">
+        <h4>eCrime Actor Identifiers</h4>
+        <div class="tags">
+          <span class="tag">ALPHV/BlackCat</span>
+          <span class="tag">LockBit</span>
+          <span class="tag">RansomHub</span>
+          <span class="tag">Cl0p</span>
+          <span class="tag">Play ransomware</span>
+          <span class="tag">Scattered Spider</span>
+          <span class="tag">UNC3944</span>
+          <span class="tag">FIN7</span>
+          <span class="tag">TA505</span>
+          <span class="tag">Lazarus financial</span>
+          <span class="tag">Killnet</span>
+          <span class="tag">NoName057(16)</span>
+          <span class="tag">DragonForce</span>
+          <span class="tag">Qilin</span>
+        </div>
+      </div>
+
+      <div class="term-category">
+        <h4>eCrime Operational Terms</h4>
+        <div class="tags">
+          <span class="tag">initial access broker</span>
+          <span class="tag">IAB listing</span>
+          <span class="tag">ransomware leak site</span>
+          <span class="tag">affiliate dispute</span>
+          <span class="tag">RaaS shutdown</span>
+          <span class="tag">stealer log</span>
+          <span class="tag">crypto mixer</span>
+          <span class="tag">OPSEC failure</span>
+          <span class="tag">arrest ransomware</span>
+          <span class="tag">decryptor release</span>
+          <span class="tag">law enforcement takedown</span>
+          <span class="tag">BreachForums</span>
+          <span class="tag">dark web forum post</span>
+          <span class="tag">data dump paste</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- APT TERMS -->
+<div class="block blue" id="apt">
+  <div class="block-header">
+    <span class="block-title">APT / State Actor Terms</span>
+    <span class="block-tag">Iran // Russia // China // DPRK // Pakistan // Israel-Nexus</span>
+  </div>
+  <div class="block-body">
+    <div class="term-grid">
+
+      <div class="term-category">
+        <h4>Iran-Linked Groups</h4>
+        <div class="tags">
+          <span class="tag">APT34 / OilRig</span>
+          <span class="tag">APT35 / Charming Kitten</span>
+          <span class="tag">APT33 / Elfin</span>
+          <span class="tag">MuddyWater</span>
+          <span class="tag">Tortoiseshell</span>
+          <span class="tag">Phosphorus</span>
+          <span class="tag">TA453</span>
+          <span class="tag">DEV-0343</span>
+          <span class="tag">Lyceum</span>
+          <span class="tag">IRGC cyber ops</span>
+          <span class="tag">MOIS Iran</span>
+          <span class="tag">Predatory Sparrow</span>
+        </div>
+      </div>
+
+      <div class="term-category">
+        <h4>Russia-Linked Groups</h4>
+        <div class="tags">
+          <span class="tag">APT28 / Fancy Bear</span>
+          <span class="tag">APT29 / Cozy Bear</span>
+          <span class="tag">Sandworm</span>
+          <span class="tag">Turla</span>
+          <span class="tag">Gamaredon</span>
+          <span class="tag">UAC-0056</span>
+          <span class="tag">Ember Bear</span>
+          <span class="tag">GRU Unit 26165</span>
+          <span class="tag">GRU Unit 74455</span>
+          <span class="tag">SVR cyber</span>
+          <span class="tag">FSB Center 18</span>
+          <span class="tag">ColdRiver</span>
+          <span class="tag">Star Blizzard</span>
+        </div>
+      </div>
+
+      <div class="term-category">
+        <h4>China-Linked Groups</h4>
+        <div class="tags">
+          <span class="tag">APT40 / BRONZE MOHAWK</span>
+          <span class="tag">APT41</span>
+          <span class="tag">Volt Typhoon</span>
+          <span class="tag">Salt Typhoon</span>
+          <span class="tag">Silk Typhoon</span>
+          <span class="tag">Flax Typhoon</span>
+          <span class="tag">UNC3886</span>
+          <span class="tag">Winnti</span>
+          <span class="tag">MSS cyber</span>
+          <span class="tag">PLA Unit 61398</span>
+          <span class="tag">Double Dragon</span>
+        </div>
+      </div>
+
+      <div class="term-category">
+        <h4>DPRK Groups</h4>
+        <div class="tags">
+          <span class="tag">Lazarus Group</span>
+          <span class="tag">Kimsuky</span>
+          <span class="tag">APT38</span>
+          <span class="tag">BlueNoroff</span>
+          <span class="tag">Andariel</span>
+          <span class="tag">TraderTraitor</span>
+          <span class="tag">RGB Bureau 121</span>
+          <span class="tag">DPRK crypto theft</span>
+          <span class="tag">DPRK IT worker scheme</span>
+        </div>
+      </div>
+
+      <div class="term-category">
+        <h4>Pakistan-Nexus Groups</h4>
+        <div class="tags">
+          <span class="tag">Transparent Tribe</span>
+          <span class="tag">APT36</span>
+          <span class="tag">SideCopy</span>
+          <span class="tag">Operation Sidecopy</span>
+          <span class="tag">Pakistan espionage India</span>
+        </div>
+      </div>
+
+      <div class="term-category">
+        <h4>Israel-Nexus / Offensive Ops</h4>
+        <div class="tags">
+          <span class="tag">Predatory Sparrow ICS</span>
+          <span class="tag">Unit 8200</span>
+          <span class="tag">Israeli cyber offensive</span>
+          <span class="tag">ICS/SCADA attack Iran</span>
+          <span class="tag">Stuxnet legacy</span>
+        </div>
+      </div>
+
+      <div class="term-category">
+        <h4>Unclassified / Cluster Naming</h4>
+        <div class="tags">
+          <span class="tag">UNC#### (Mandiant unclassified)</span>
+          <span class="tag">DEV-#### (Microsoft pre-attribution)</span>
+          <span class="tag">TAG (Google threat group)</span>
+          <span class="tag">cluster activity</span>
+          <span class="tag">overlapping TTPs</span>
+        </div>
+      </div>
+
+      <div class="term-category">
+        <h4>Malware Families (track by name)</h4>
+        <div class="tags">
+          <span class="tag">Industroyer2</span>
+          <span class="tag">KAPEKA</span>
+          <span class="tag">Cyclops Blink</span>
+          <span class="tag">DUSTTRAP</span>
+          <span class="tag">CHIMNEYSWEEP</span>
+          <span class="tag">PlugX</span>
+          <span class="tag">QuasarRAT</span>
+          <span class="tag">Cadet Blizzard wiper</span>
+          <span class="tag">POWERSTAR</span>
+          <span class="tag">BeaverTail</span>
+        </div>
+      </div>
+
+      <div class="term-category">
+        <h4>TTP Tracking Terms</h4>
+        <div class="tags">
+          <span class="tag">spearphish campaign</span>
+          <span class="tag">watering hole</span>
+          <span class="tag">supply chain compromise</span>
+          <span class="tag">living off the land</span>
+          <span class="tag">LOTL</span>
+          <span class="tag">zero-day exploitation</span>
+          <span class="tag">credential harvest</span>
+          <span class="tag">OT/ICS targeting</span>
+          <span class="tag">wiper malware</span>
+          <span class="tag">destructive attack</span>
+          <span class="tag">pre-positioning critical infrastructure</span>
+          <span class="tag">telecom intrusion</span>
+          <span class="tag">BYOVD</span>
+          <span class="tag">proxy network abuse</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- CONFLICT TERMS -->
+<div class="block purple full-width" id="conflict">
+  <div class="block-header">
+    <span class="block-title">Conflict Zone Terms</span>
+    <span class="block-tag">Ukraine // Middle East // Sub-Saharan // Taiwan // Gaza</span>
+  </div>
+  <div class="block-body" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+    <div class="term-grid">
+
+      <div class="term-category">
+        <h4>Russia-Ukraine Sub-Surface</h4>
+        <div class="tags">
+          <span class="tag">milblogger</span>
+          <span class="tag">voenkory</span>
+          <span class="tag">Rybar</span>
+          <span class="tag">DeepState UA map</span>
+          <span class="tag">frontline shift</span>
+          <span class="tag">GUR intel release</span>
+          <span class="tag">FPV drone Ukraine</span>
+          <span class="tag">EW jamming corridor</span>
+          <span class="tag">glide bomb strike</span>
+          <span class="tag">UMPB D-30SN</span>
+          <span class="tag">mobilization Russia</span>
+          <span class="tag">prisoner exchange</span>
+          <span class="tag">DPRK troops Russia</span>
+          <span class="tag">KPA deployment Kursk</span>
+          <span class="tag">North Korea weapons transfer</span>
+          <span class="tag">Shahed drone production</span>
+          <span class="tag">F-16 Ukraine deployment</span>
+        </div>
+      </div>
+
+      <div class="term-category">
+        <h4>Gaza / West Bank Sub-Surface</h4>
+        <div class="tags">
+          <span class="tag">PIJ</span>
+          <span class="tag">Palestinian Islamic Jihad</span>
+          <span class="tag">Hamas military wing</span>
+          <span class="tag">Izz ad-Din al-Qassam Brigades</span>
+          <span class="tag">settler violence West Bank</span>
+          <span class="tag">IDF raid Jenin</span>
+          <span class="tag">tunnel network Gaza</span>
+          <span class="tag">hostage deal status</span>
+          <span class="tag">ceasefire violation Gaza</span>
+          <span class="tag">UNRWA access denial</span>
+        </div>
+      </div>
+
+      <div class="term-category">
+        <h4>Sub-Saharan / Wagner / Africa</h4>
+        <div class="tags">
+          <span class="tag">Africa Corps</span>
+          <span class="tag">Wagner Group successor</span>
+          <span class="tag">Burkina Faso AES</span>
+          <span class="tag">Mali FAMA</span>
+          <span class="tag">Niger junta</span>
+          <span class="tag">Sudan RSF</span>
+          <span class="tag">Rapid Support Forces</span>
+          <span class="tag">SAF Sudan</span>
+          <span class="tag">DRC M23</span>
+          <span class="tag">JNIM attack</span>
+          <span class="tag">ISGS strike</span>
+          <span class="tag">Mozambique RENAMO</span>
+          <span class="tag">Somalia Al-Shabaab</span>
+          <span class="tag">AMISOM successor</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="term-grid">
+
+      <div class="term-category">
+        <h4>Middle East / Iran Theater</h4>
+        <div class="tags">
+          <span class="tag">IRGC Quds Force</span>
+          <span class="tag">Houthi strike</span>
+          <span class="tag">Red Sea shipping attack</span>
+          <span class="tag">Ansar Allah</span>
+          <span class="tag">PMF Iraq</span>
+          <span class="tag">Kataib Hezbollah</span>
+          <span class="tag">Islamic Resistance Iraq</span>
+          <span class="tag">proxy attack US base</span>
+          <span class="tag">Iran nuclear enrichment</span>
+          <span class="tag">Natanz</span>
+          <span class="tag">Fordow</span>
+          <span class="tag">shadow fleet Iran oil</span>
+          <span class="tag">Iran sanctions evasion</span>
+          <span class="tag">Al-Monitor Iran</span>
+          <span class="tag">Babel Street Iran</span>
+        </div>
+      </div>
+
+      <div class="term-category">
+        <h4>Taiwan Strait / Indo-Pacific</h4>
+        <div class="tags">
+          <span class="tag">PLA exercise Taiwan</span>
+          <span class="tag">PLAN incursion</span>
+          <span class="tag">ADIZ violation Taiwan</span>
+          <span class="tag">PLA Air Force sorties</span>
+          <span class="tag">Taiwan Strait median line</span>
+          <span class="tag">gray zone Taiwan</span>
+          <span class="tag">coast guard confrontation PHL</span>
+          <span class="tag">South China Sea standoff</span>
+          <span class="tag">Spratly Islands</span>
+          <span class="tag">Second Thomas Shoal</span>
+        </div>
+      </div>
+
+      <div class="term-category">
+        <h4>General Conflict Tracking Terms</h4>
+        <div class="tags">
+          <span class="tag">ceasefire violation</span>
+          <span class="tag">troop concentration</span>
+          <span class="tag">logistics hub strike</span>
+          <span class="tag">force generation</span>
+          <span class="tag">arms transfer</span>
+          <span class="tag">ammunition depot</span>
+          <span class="tag">casualty estimate</span>
+          <span class="tag">territorial control change</span>
+          <span class="tag">UAV swarm</span>
+          <span class="tag">maritime interdiction</span>
+          <span class="tag">PSYOP</span>
+          <span class="tag">electronic warfare</span>
+          <span class="tag">deception operation</span>
+          <span class="tag">disinformation campaign</span>
+          <span class="tag">influence operation</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  SECTION 3: SOURCES                                     -->
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<div class="section-divider"><span>03 // Sources</span></div>
+
+<!-- ADDITIONAL SOURCES -->
+<div class="block green full-width" id="sources">
+  <div class="block-header">
+    <span class="block-title">Additional Source Registry</span>
+    <span class="block-tag">Sources not covered in Tier Table above</span>
+  </div>
+  <div class="block-body">
+    <table class="source-table">
+      <thead>
+        <tr>
+          <th>Source</th>
+          <th>Coverage</th>
+          <th>Notes / Access</th>
+          <th>Tier</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="4" style="background:var(--bg3);color:var(--text-dim);font-family:var(--cond);font-size:10px;letter-spacing:2px;text-transform:uppercase;">── FREE eCRIME / DARK WEB ALTERNATIVES ──</td></tr>
+        <tr>
+          <td>Ransomwatch.org <span class="badge free">free</span></td>
+          <td>eCrime — active leak site aggregator</td>
+          <td>Scrapes all active ransomware leak sites. No account. Essential for eCrime track. bookmark + check weekly.</td>
+          <td><span class="badge t2">T2</span></td>
+        </tr>
+        <tr>
+          <td>Flare.io blog <span class="badge free">free</span></td>
+          <td>eCrime — dark web / initial access broker</td>
+          <td>Free research blog with eCrime depth. Paid platform for monitoring. flare.io/blog</td>
+          <td><span class="badge t2">T2</span></td>
+        </tr>
+        <tr>
+          <td>Intel471 blog <span class="badge free">free</span></td>
+          <td>eCrime — underground forums, actor tracking</td>
+          <td>Free blog only. High-quality underground economy reporting. intel471.com/blog</td>
+          <td><span class="badge t2">T2</span></td>
+        </tr>
+
+        <tr><td colspan="4" style="background:var(--bg3);color:var(--text-dim);font-family:var(--cond);font-size:10px;letter-spacing:2px;text-transform:uppercase;">── CONFLICT / REGIONAL ──</td></tr>
+        <tr>
+          <td>Liveuamap <span class="badge free">free</span></td>
+          <td>Conflict — real-time event mapping</td>
+          <td>liveuamap.com — tactical-level mapping, complements ISW for daily frontline use.</td>
+          <td><span class="badge t3">T3</span></td>
+        </tr>
+        <tr>
+          <td>Al-Monitor <span class="badge mixed">mixed</span></td>
+          <td>ME sub-surface — Iran, Gulf, Levant</td>
+          <td>al-monitor.com — Iran domestic, proxy networks, Gulf politics. Depth reporting.</td>
+          <td><span class="badge t2">T2</span></td>
+        </tr>
+        <tr>
+          <td>Africa Intelligence <span class="badge paid">paid</span></td>
+          <td>Sub-Saharan political/security</td>
+          <td>africaintelligence.com — niche but high fidelity for Wagner/AES tracking.</td>
+          <td><span class="badge t2">T2</span></td>
+        </tr>
+        <tr>
+          <td>Bellingcat <span class="badge free">free</span></td>
+          <td>Conflict — open source investigation / geolocation</td>
+          <td>bellingcat.com — geolocation, imagery, conflict attribution. Methodology-transparent.</td>
+          <td><span class="badge t2">T2</span></td>
+        </tr>
+
+        <tr><td colspan="4" style="background:var(--bg3);color:var(--text-dim);font-family:var(--cond);font-size:10px;letter-spacing:2px;text-transform:uppercase;">── INFRASTRUCTURE / OSINT TOOLING ──</td></tr>
+        <tr>
+          <td>Shodan <span class="badge mixed">mixed</span></td>
+          <td>APT — C2 infrastructure, exposed services</td>
+          <td>shodan.io — search for APT C2 patterns, cert fingerprints. Free tier limited.</td>
+          <td><span class="badge t2">T2</span></td>
+        </tr>
+        <tr>
+          <td>Censys <span class="badge mixed">mixed</span></td>
+          <td>APT — infrastructure hunting</td>
+          <td>censys.io — certificate and host-based infrastructure attribution. Pairs with Shodan.</td>
+          <td><span class="badge t2">T2</span></td>
+        </tr>
+        <tr>
+          <td>TelegramDB.org <span class="badge free">free</span></td>
+          <td>Aggregator — Telegram channel search</td>
+          <td>Alternative to TGStat. Different index, useful for finding channels TGStat misses.</td>
+          <td><span class="badge t3">T3</span></td>
+        </tr>
+        <tr>
+          <td>TGStat <span class="badge free">free</span></td>
+          <td>Aggregator — Telegram analytics</td>
+          <td>tgstat.com — channel discovery, subscriber counts, post frequency filter.</td>
+          <td><span class="badge t3">T3</span></td>
+        </tr>
+        <tr>
+          <td>Maltego CE <span class="badge mixed">mixed</span></td>
+          <td>OSINT — entity relationship mapping</td>
+          <td>Free CE tier. Limited transforms. Essential for actor connection mapping and pivoting.</td>
+          <td><span class="badge t2">T2</span></td>
+        </tr>
+        <tr>
+          <td>Feedly / Inoreader <span class="badge mixed">mixed</span></td>
+          <td>Aggregator — RSS / keyword alert</td>
+          <td>Core workflow infrastructure. Priority inbox + keyword rules per track.</td>
+          <td>—</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  SECTION 4: SEARCH DORKS                                -->
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<div class="section-divider"><span>04 // Search Dorks</span></div>
+
+<div class="block amber full-width" id="dorks">
+  <div class="block-header">
+    <span class="block-title">Search Dork Templates</span>
+    <span class="block-tag">Google // Shodan // GitHub // Paste Sites</span>
+  </div>
+  <div class="block-body">
+    <p style="font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-bottom:16px;letter-spacing:1px;">
+      NOTE: Google does not support explicit AND between clauses — default proximity applies. Use these in Google, Bing, or Boolean-supporting search tools. Purple italic text = replace with your variable. Click any dork to select all text.
+    </p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+
+      <div>
+        <div class="dork-block">
+          <div class="dork-label">APT Campaign — New Vendor Reporting</div>
+          <div class="dork-note">// Google — replace group name and roll date forward weekly</div>
+          <div class="dork-code">
+            <span class="sop">site:</span><span class="term">mandiant.com OR sentinelone.com/labs OR volexity.com OR microsoft.com/security/blog</span><br>
+            "<span class="term">APT34</span>" OR "<span class="term">OilRig</span>" OR "<span class="term">Charming Kitten</span>"<br>
+            <span class="sop">after:</span><span class="var">[YYYY-MM-DD — rolling 30d]</span>
+          </div>
+        </div>
+
+        <div class="dork-block">
+          <div class="dork-label">APT Zero-Day / Active Exploitation</div>
+          <div class="dork-code">
+            "<span class="term">exploitation in the wild</span>" OR "<span class="term">actively exploited</span>"<br>
+            "<span class="term">nation-state</span>" OR "<span class="term">state-sponsored</span>" OR "<span class="term">APT</span>"<br>
+            <span class="sop">site:</span><span class="term">cisa.gov OR microsoft.com/security OR nvd.nist.gov</span>
+          </div>
+        </div>
+
+        <div class="dork-block">
+          <div class="dork-label">APT C2 Infrastructure (Shodan)</div>
+          <div class="dork-note">// Shodan — replace with known actor cert or Cobalt Strike profile</div>
+          <div class="dork-code">
+            ssl.cert.subject.cn:"<span class="var">[known cert pattern]</span>"<br>
+            <span class="op">OR</span> product:"Cobalt Strike" port:443<br>
+            <span class="op">OR</span> http.html_hash:<span class="var">[hash]</span>
+          </div>
+        </div>
+
+        <div class="dork-block">
+          <div class="dork-label">Ransomware Leak Site / eCrime Activity</div>
+          <div class="dork-note">// Supplement with Ransomwatch.org for leak site monitoring</div>
+          <div class="dork-code">
+            "<span class="term">RansomHub</span>" OR "<span class="term">LockBit</span>" OR "<span class="term">Cl0p</span>" OR "<span class="term">Play ransomware</span>"<br>
+            "<span class="term">new victim</span>" OR "<span class="term">arrested</span>" OR "<span class="term">decryptor</span>" OR "<span class="term">indictment</span>"<br>
+            <span class="op">-site:</span><span class="term">youtube.com -site:reddit.com</span>
+          </div>
+        </div>
+
+        <div class="dork-block">
+          <div class="dork-label">Cartel Incident — Plaza-Level (Spanish)</div>
+          <div class="dork-note">// Combine with Google Translate; InSight Crime search for English</div>
+          <div class="dork-code">
+            "<span class="term">CJNG</span>" OR "<span class="term">Sinaloa</span>" OR "<span class="term">Los Chapitos</span>" OR "<span class="var">[cartel name]</span>"<br>
+            "<span class="var">[state/city]</span>"<br>
+            "<span class="term">enfrentamiento</span>" OR "<span class="term">emboscada</span>" OR "<span class="term">narcomanta</span>" OR "<span class="term">levantón</span>"
+          </div>
+        </div>
+
+        <div class="dork-block">
+          <div class="dork-label">OFAC Sanctions / Designations</div>
+          <div class="dork-note">// Useful for actor alias confirmation and financial network mapping</div>
+          <div class="dork-code">
+            <span class="sop">site:</span><span class="term">home.treasury.gov/policy-issues/financial-sanctions</span><br>
+            "<span class="var">[actor name]</span>" OR "<span class="var">[alias]</span>"
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="dork-block">
+          <div class="dork-label">Russia-Ukraine Frontline (ISW + OSINT)</div>
+          <div class="dork-note">// Roll after: date daily; cross-reference Liveuamap for tactical detail</div>
+          <div class="dork-code">
+            <span class="sop">site:</span><span class="term">understandingwar.org</span><br>
+            "<span class="term">Ukraine</span>" "<span class="term">frontline</span>" OR "<span class="term">offensive</span>" OR "<span class="term">advance</span>"<br>
+            <span class="sop">after:</span><span class="var">[TODAY-3]</span>
+          </div>
+        </div>
+
+        <div class="dork-block">
+          <div class="dork-label">DPRK Crypto Theft / Sanctions Evasion</div>
+          <div class="dork-code">
+            "<span class="term">Lazarus</span>" OR "<span class="term">TraderTraitor</span>" OR "<span class="term">BlueNoroff</span>"<br>
+            "<span class="term">crypto theft</span>" OR "<span class="term">DeFi exploit</span>" OR "<span class="term">sanctions evasion</span>" OR "<span class="term">mixer</span>"<br>
+            <span class="sop">after:</span><span class="var">[rolling 30d]</span>
+          </div>
+        </div>
+
+        <div class="dork-block">
+          <div class="dork-label">Iran Proxy Operational Activity</div>
+          <div class="dork-code">
+            "<span class="term">Islamic Resistance</span>" OR "<span class="term">Kataib Hezbollah</span>" OR "<span class="term">Houthi</span>" OR "<span class="term">Ansar Allah</span>"<br>
+            "<span class="term">strike</span>" OR "<span class="term">drone</span>" OR "<span class="term">missile</span>" OR "<span class="term">claimed</span>"<br>
+            <span class="sop">site:</span><span class="term">criticalthreats.org OR longwarjournal.org</span><br>
+            <span class="sop">after:</span><span class="var">[rolling 7d]</span>
+          </div>
+        </div>
+
+        <div class="dork-block">
+          <div class="dork-label">Africa / Wagner Successor Activity</div>
+          <div class="dork-code">
+            "<span class="term">Africa Corps</span>" OR "<span class="term">Wagner</span>" OR "<span class="term">RSF</span>" OR "<span class="term">M23</span>" OR "<span class="term">JNIM</span>"<br>
+            "<span class="var">[country: Mali OR Burkina OR Sudan OR DRC]</span>"<br>
+            <span class="sop">site:</span><span class="term">acleddata.com OR longwarjournal.org</span>
+          </div>
+        </div>
+
+        <div class="dork-block">
+          <div class="dork-label">GitHub — Leaked Credentials / Actor Tooling</div>
+          <div class="dork-note">// Use GitHub code search; also check paste sites (pastebin.com, ghostbin)</div>
+          <div class="dork-code">
+            <span class="sop">site:</span><span class="term">github.com</span><br>
+            "<span class="var">[malware family]</span>" OR "<span class="var">[C2 pattern]</span>"<br>
+            filetype:py OR filetype:ps1 OR filetype:go<br>
+            <span class="op">-</span>"<span class="term">detection</span>" <span class="op">-</span>"<span class="term">yara</span>"
+          </div>
+        </div>
+
+        <div class="dork-block">
+          <div class="dork-label">Telegram Channel Discovery (TGStat)</div>
+          <div class="dork-note">// Also run same query on TelegramDB.org for cross-coverage</div>
+          <div class="dork-code">
+            <span class="sop">URL:</span> <span class="term">tgstat.com/en/search</span><br>
+            <span class="op">Query:</span> <span class="var">[actor name] [geo] [language]</span><br>
+            Filter: subscribers &gt;500, posts/7d &gt;3, language match
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  SECTION 5: CADENCE                                     -->
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<div class="section-divider"><span>05 // Cadence</span></div>
+
+<div class="block green full-width" id="cadence">
+  <div class="block-header">
+    <span class="block-title">Collection Cadence</span>
+    <span class="block-tag">Daily // Weekly // Monthly // Triggered</span>
+  </div>
+  <div class="block-body">
+    <div class="cadence-grid-4">
+
+      <div class="cadence-cell daily">
+        <h4>Daily (30–60 min)</h4>
+        <ul>
+          <li>RSS aggregator sweep — priority inbox only</li>
+          <li>Priority Telegram channel check</li>
+          <li>ISW daily update (UA/RU + ME)</li>
+          <li>UK MoD release check</li>
+          <li>CERT-UA advisory check</li>
+          <li>CISA alert RSS</li>
+          <li>Google Alert digest</li>
+          <li>Ransomwatch.org scan (eCrime tracks)</li>
+          <li>Flag, tag, log RUMINT — do not read-to-understand</li>
+        </ul>
+      </div>
+
+      <div class="cadence-cell weekly">
+        <h4>Weekly (60–90 min)</h4>
+        <ul>
+          <li>Run dork templates per active track</li>
+          <li>Vendor blog review: Mandiant, SentinelLabs, Volexity, MSTIC</li>
+          <li>InSight Crime + Borderland Beat cartel sweep</li>
+          <li>ACLED export pull for active geographies</li>
+          <li>Corroboration pass on open RUMINT items</li>
+          <li>Delta brief per P1 track (3–5 sentences)</li>
+          <li>Collection plan review — drop stale, add new</li>
+        </ul>
+      </div>
+
+      <div class="cadence-cell monthly">
+        <h4>Monthly (2–4 hrs)</h4>
+        <ul>
+          <li>Full actor profile update in notebook</li>
+          <li>Telegram channel discovery via TGStat + TelegramDB</li>
+          <li>Source audit — fidelity review per source used</li>
+          <li>ACLED trend analysis — structured data</li>
+          <li>Maltego actor relationship refresh</li>
+          <li>Shodan/Censys infrastructure sweep for active APT tracks</li>
+          <li>Knowledge gap identification per track</li>
+          <li>Full collection plan review vs. standing requirements</li>
+          <li>Escalate dormant tracks to CLOSED or downgrade to P3</li>
+        </ul>
+      </div>
+
+      <div class="cadence-cell trigger">
+        <h4>Triggered (on major event)</h4>
+        <ul>
+          <li>Pull all open RUMINT for affected track</li>
+          <li>Run confirmation / disconfirmation pass</li>
+          <li>Update confidence ratings on all related entries</li>
+          <li>Log which prior RUMINT was validated or disinfo</li>
+          <li>Log trigger event as reference anchor in notebook</li>
+          <li>Recalibrate source fidelity scores</li>
+          <li>Run priority dork sweep for new indicators</li>
+          <li>Assess whether track priority tier should change</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  SECTION 6: FOLLOWS / CHANNELS                          -->
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<div class="section-divider"><span>06 // Follows &amp; Channels</span></div>
+
+<!-- X/TWITTER -->
+<div class="block blue" id="follows">
+  <div class="block-header">
+    <span class="block-title">X / Twitter Follow List</span>
+    <span class="block-tag">Curated Signal // Build Lists by Track</span>
+  </div>
+  <div class="block-body">
+    <div class="term-grid">
+      <div class="term-category">
+        <h4>CTI / APT</h4>
+        <div class="tags">
+          <span class="tag handle">@MsftSecIntel</span>
+          <span class="tag handle">@GoogleThreatIntel</span>
+          <span class="tag handle">@SentinelOne</span>
+          <span class="tag handle">@Volexity</span>
+          <span class="tag handle">@CISAgov</span>
+          <span class="tag handle">@CERT_UA</span>
+          <span class="tag handle">@GovCERT_CH</span>
+          <span class="tag handle">@MalwareHunterTeam</span>
+          <span class="tag handle">@vxunderground</span>
+          <span class="tag handle">@campuscodi</span>
+          <span class="tag handle">@BushidoToken</span>
+          <span class="tag handle">@cyb3rops</span>
+          <span class="tag handle">@threatintel</span>
+          <span class="tag handle">@UK_Daniel_Card</span>
+        </div>
+      </div>
+      <div class="term-category">
+        <h4>Conflict / OSINT</h4>
+        <div class="tags">
+          <span class="tag handle">@wartranslated</span>
+          <span class="tag handle">@DefenceHQ</span>
+          <span class="tag handle">@Neonhandrail</span>
+          <span class="tag handle">@UAControlMap</span>
+          <span class="tag handle">@DefMon3</span>
+          <span class="tag handle">@MT_Anderson</span>
+          <span class="tag handle">@RALee85</span>
+          <span class="tag handle">@criticalthreats</span>
+          <span class="tag handle">@LongWarJournal</span>
+          <span class="tag handle">@EliotHiggins</span>
+          <span class="tag handle">@christogrozev</span>
+          <span class="tag handle">@IranIntl_En</span>
+        </div>
+      </div>
+      <div class="term-category">
+        <h4>Cartel / OCG</h4>
+        <div class="tags">
+          <span class="tag handle">@InSightCrime</span>
+          <span class="tag handle">@BorderlandBeat</span>
+          <span class="tag handle">@MexicoViolence</span>
+          <span class="tag handle">@GenaroLozano</span>
+          <span class="tag handle">@IOStrategist</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TELEGRAM -->
+<div class="block red" id="telegram">
+  <div class="block-header">
+    <span class="block-title">Telegram Priority Channels</span>
+    <span class="block-tag">Handles Included // T3/T4 Unless Noted // Cross-Check All</span>
+  </div>
+  <div class="block-body">
+    <div class="term-grid">
+      <div class="term-category">
+        <h4>Ukraine / Russia Conflict</h4>
+        <div class="tags">
+          <span class="tag telegram">@rybar (T4 PRO-RU)</span>
+          <span class="tag telegram">@wargonzo (T4 PRO-RU)</span>
+          <span class="tag telegram">@ukrainenow (T3)</span>
+          <span class="tag telegram">@nexta_live (T3 PRO-UA)</span>
+          <span class="tag telegram">@legitimniy (T3)</span>
+          <span class="tag telegram">@deepstatemap (T3 PRO-UA)</span>
+          <span class="tag telegram">@operativnoua (T3)</span>
+          <span class="tag telegram">@wartranslated_tg (T3)</span>
+          <span class="tag telegram">@intelslava (T4 — high disinfo rate)</span>
+        </div>
+      </div>
+      <div class="term-category">
+        <h4>Middle East / Iran Proxies</h4>
+        <div class="tags">
+          <span class="tag telegram">@sabereenews (T4 PRO-PMF)</span>
+          <span class="tag telegram">@almasirah_arabic (T4 ADV-HOUTHI)</span>
+          <span class="tag telegram">@iranintl (T2)</span>
+          <span class="tag telegram">@middleeasteye_tg (T3)</span>
+        </div>
+      </div>
+      <div class="term-category">
+        <h4>Cartel / MX</h4>
+        <div class="tags">
+          <span class="tag telegram">@blogdelnarco (T4 — graphic)</span>
+          <span class="tag telegram">@corcholoco (T4 — graphic)</span>
+          <span class="tag telegram">@narconoticias (T4)</span>
+          <span class="tag telegram">@insightcrime_es (T2)</span>
+        </div>
+      </div>
+      <div class="term-category">
+        <h4>eCrime / Underground</h4>
+        <div class="tags">
+          <span class="tag telegram">@vxunderground_tg (T3)</span>
+          <span class="tag telegram">@ransomwarenews (T3)</span>
+          <span class="tag telegram">@cert_ua (T1)</span>
+          <span class="tag telegram">@cisagov (T1)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer-note">
+  ⚠ ANALYST NOTES v2 //
+  (1) TIME BUDGET: Daily cadence assumes 2–3 active P1 tracks. Scale up to 60 min for 5 tracks. Do not attempt full coverage with less time — partial collection is worse than scoped collection.
+  (2) SOURCE INTEGRITY: Tier 4 sources are monitored, not trusted. Log their claims as RUMINT. Never cite single-source T4 in finished product. Graphic content is standard in cartel and conflict Telegram — establish personal exposure management protocols before expanding monitoring.
+  (3) OPSEC: Monitor-only posture on all adversarial channels. Do not engage, reply, or join with a traceable identity. Use separate browser profile or sandboxed VM for T4 and dark web source access.
+  (4) SILENCE AS DATA: When a previously active track goes quiet, log that absence. Operational silence can precede significant activity or indicate disruption. Flag for review.
+  (5) DORK MAINTENANCE: Date variables in dorks must be updated — stale after: dates return stale results. Review dork library monthly and roll forward all date parameters.
+  (6) STRUCTURED DATA PRIORITY: ACLED and Ransomwatch are the highest-fidelity aggregate sources for trend analysis. Prioritize them for pattern work over raw social and Telegram.
+</div>
+
+</main>
+</body>
+</html>
